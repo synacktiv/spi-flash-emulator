@@ -1,0 +1,103 @@
+; SPI slave
+;
+; Transfers to/from the CPU are a byte at a time
+;
+; Every clock a bit is read and a bit is written
+; If no bytes are available to transmit, zeros are written
+; 
+; Read pins:
+; IN:  0: MOSI
+;      1: SCK
+;      2: CS (JMP pin)
+; OUT: 0: MISO  (write SM only)
+.program flash_read
+top:
+    wait 0 pin 2
+    set x, 7
+read_cmd_loop:
+    wait 0 pin 1
+    wait 1 pin 1
+    in pins, 1
+    jmp x--, read_cmd_loop
+    push
+    in y, 4
+    set x, 3
+read_addr_high_loop: // skip bits some MSB bits
+    wait 0 pin 1
+    wait 1 pin 1
+    jmp x--, read_addr_high_loop
+    set x, 17
+read_addr_loop:
+    wait 0 pin 1
+    wait 1 pin 1
+    in pins, 1
+    jmp x--, read_addr_loop
+    in null, 2 // Assume request is 2bit aligned
+    set x, 0x1a // Add SSI SPI request low byte, see https://github.com/raspberrypi/pico-examples/blob/master/flash/ssi_dma/flash_ssi_dma.c#L51
+    in x, 4
+    in null, 4
+    set x, 1
+    push
+read_data_loop:
+    jmp read_data_loop
+
+
+.program flash_write
+    wait 0 pin 2
+    set x, 31
+    set y, 7
+cmd_addr_loop:
+    wait 0 pin 1
+    wait 1 pin 1
+    jmp x--, cmd_addr_loop
+cmd_addr_loop2:
+    wait 0 pin 1
+    wait 1 pin 1
+    jmp y--, cmd_addr_loop2
+PUBLIC addr_loop_end:
+write_loop:
+.wrap_target
+    wait 0 pin 1
+    out pins, 1
+    wait 1 pin 1
+    jmp write_loop
+.wrap
+
+% c-sdk {
+void flash_read_program_init(PIO pio, uint sm, uint offset, uint mosi) {
+    pio_gpio_init(pio, mosi);
+    pio_gpio_init(pio, mosi + 1);
+    pio_gpio_init(pio, mosi + 2);
+    gpio_set_pulls(mosi, false, false);
+    gpio_set_pulls(mosi + 1, false, false);
+    gpio_set_pulls(mosi + 2, false, true);
+    pio_sm_set_consecutive_pindirs(pio, sm, mosi, 3, false);
+
+    pio_sm_config c = flash_read_program_get_default_config(offset);
+    sm_config_set_in_pins(&c, mosi);
+    sm_config_set_in_shift(&c, false, true, 32);
+
+    // load Y with MSB of address which will be sent to SSI, here 1MB 
+    pio_sm_put(pio, sm, 0x01);
+    pio_sm_exec(pio, sm, pio_encode_pull(false, true));
+    pio_sm_exec(pio, sm, pio_encode_mov(pio_y, pio_osr));
+
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+
+void flash_write_program_init(PIO pio, uint sm, uint offset, uint mosi, uint miso) {
+    pio_gpio_init(pio, miso);
+    pio_sm_set_consecutive_pindirs(pio, sm, miso, 1, true);
+
+    pio_sm_config c = flash_write_program_get_default_config(offset);
+    sm_config_set_in_pins(&c, mosi);
+    sm_config_set_out_pins(&c, miso, 1);
+    sm_config_set_out_shift(&c, false, true, 32);
+    sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
+    sm_config_set_jmp_pin(&c, mosi);
+
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}
