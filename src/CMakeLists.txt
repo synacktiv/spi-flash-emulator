@@ -13,7 +13,8 @@ set(PROJECT_NAME flash_emulator)
 
 set(PICO_USE_FASTEST_SUPPORTED_CLOCK 1)
 
-math(EXPR EMU_FLASH_SIZE "1024 * 1024*1")
+# Emulate 1MB Flash
+math(EXPR EMU_FLASH_SIZE "1024 * 1024 * 1")
 math(EXPR REAL_FLASH_SIZE "1024 * 1024 * 4")
 
 # Include the Pico SDK. Must be before project()
@@ -38,8 +39,8 @@ add_executable(${PROJECT_NAME}
         data.h
 )
 
-
-add_definitions(-DEMU_FLASH_SIZE=${EMU_FLASH_SIZE} -DREAL_FLASH_SIZE=${REAL_FLASH_SIZE})
+# Toggle DEBUG here to get serial cmd logging
+add_definitions(-DEMU_FLASH_SIZE=${EMU_FLASH_SIZE} -DREAL_FLASH_SIZE=${REAL_FLASH_SIZE} -DDEBUG=0)
 target_link_options(${PROJECT_NAME} PRIVATE "-Wl,--defsym=__PERSISTENT_STORAGE_LEN=${EMU_FLASH_SIZE}")
 
 pico_generate_pio_header(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/flash.pio)

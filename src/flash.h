@@ -1,7 +1,6 @@
 #ifndef _FLASH_FLASH_H
 #define _FLASH_FLASH_H
 
-
 #include <stdint.h>
 
 // Configuration: GPIOs for the SPI interface
@@ -14,7 +13,7 @@
 // allocation and then reading the values from memory is slightly slower.
 
 // Configuration: PIO and SMs to use
-// A different PIO must be used for each of read and write 
+// A different PIO must be used for each of read and write
 // as the total program size is too large to fit in one PIO
 #define SIM_FLASH_pio_read_sm   1
 #define SIM_FLASH_pio_read      pio1
@@ -38,7 +37,6 @@ typedef struct element {
     char message[0x100];
 } element_t;
 extern queue_t sample_fifo;
-
 
 // Setup the simulated flash and launch core1 to service the commands.
 //

@@ -59,7 +59,7 @@ PIO flow for Read command:
 - The read PIO reads the first byte and sends it to core1, which does the appropriate setup for the command while the address is being received
 - The read PIO reads the address and sends it to it's FIFO which is connected to SSI data register. 
 - The SSI controller will fetch requested data from flash using quad SPI at 100MHz which is fast enough to response data in time.
-- When the transfert is finished, the DMA channel for PIO received is triggered. This DMA channel needs to be enabled after data has arrvied otherwire there is cache-related problems.
+- When the transfert is finished, the DMA channel for PIO received is triggered. This DMA channel needs to be enabled after data has arrived otherwise there is cache-related problems.
 
 ### Add a new chip
 
