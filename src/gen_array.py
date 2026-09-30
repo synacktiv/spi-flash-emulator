@@ -1,5 +1,6 @@
 
-import struct, sys
+import struct
+import sys
 
 flash_size = int(sys.argv[1])
 
