@@ -63,7 +63,9 @@ read_data_loop:
  * If no bytes are available to transmit, zeros are written.
  */
 .program flash_write
-    wait 0 pin 2
+    set pindirs, 0      // reset MISO output to open drain
+    wait 0 pin 2        // wait for CS
+
     set x, 31
     set y, 7
 cmd_addr_loop:
@@ -77,10 +79,11 @@ cmd_addr_loop2:
 
     // Write data to MISO
 PUBLIC addr_loop_end:
+    set pindirs, 1      // set MISO as output, will be set back to open drain later
 write_loop:
 .wrap_target
     wait 0 pin 1
-    out pins, 1
+    out pins, 1         // receive 1 bit from DMA, and place it to first element of pins
     wait 1 pin 1
     jmp write_loop
 .wrap
@@ -110,14 +113,13 @@ void flash_read_program_init(PIO pio, uint sm, uint offset, uint mosi) {
 
 void flash_write_program_init(PIO pio, uint sm, uint offset, uint mosi, uint miso) {
     pio_gpio_init(pio, miso);
-    pio_sm_set_consecutive_pindirs(pio, sm, miso, 1, true);
 
     pio_sm_config c = flash_write_program_get_default_config(offset);
     sm_config_set_in_pins(&c, mosi);
     sm_config_set_out_pins(&c, miso, 1); // for OUT instruction
+    sm_config_set_set_pins(&c, miso, 1); // for SET pindir instruction
     sm_config_set_out_shift(&c, false, true, 32);
     sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
-    sm_config_set_jmp_pin(&c, mosi);
 
     pio_sm_init(pio, sm, offset, &c);
     pio_sm_set_enabled(pio, sm, true);

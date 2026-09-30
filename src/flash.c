@@ -162,7 +162,7 @@ static void __scratch_x("core1_main") core1_main() {
       dma_hw->ch[SIM_FLASH_tx_channel].al3_read_addr_trig = emu_ram;
 
       pio_sm_exec(SIM_FLASH_pio_write, SIM_FLASH_pio_write_sm,
-                  pio_encode_jmp(flash_write_wrap_target));
+                  pio_encode_jmp(flash_write_offset_addr_loop_end));
 
       wait_for_cs_high();
       dma_channel_abort(SIM_FLASH_tx_channel);
