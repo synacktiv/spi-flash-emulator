@@ -80,12 +80,10 @@ cmd_addr_loop2:
     // Write data to MISO
 PUBLIC addr_loop_end:
     set pindirs, 1      // set MISO as output, will be set back to open drain later
-write_loop:
 .wrap_target
     wait 0 pin 1
     out pins, 1         // receive 1 bit from DMA, and place it to first element of pins
     wait 1 pin 1
-    jmp write_loop
 .wrap
 
 % c-sdk {
