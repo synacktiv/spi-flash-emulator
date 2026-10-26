@@ -1,10 +1,13 @@
-
+#!/usr/bin/env python3
 import struct
 import sys
 
+if len(sys.argv) < 2:
+    print(f"Usage: {sys.argv[0]} FLASH_SIZE")
+    exit(1)
 flash_size = int(sys.argv[1])
 
-data = b''.join([struct.pack('>i', 0x41000000+x) for x in range(0, flash_size, 4)])
+data = b"".join([struct.pack(">i", 0x41000000 + x) for x in range(0, flash_size, 4)])
 # data = open('test.bin','rb').read(1024*1024*1)
 
 assert len(data) <= flash_size
@@ -22,5 +25,5 @@ volatile uint8_t __attribute__((section(".section_persistent.toto"))) samples []
 #endif
 """
 
-with open('data.h', 'w') as f:
+with open("data.h", "w") as f:
     f.write(template)
